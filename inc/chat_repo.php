@@ -1,3 +1,4 @@
+
 <?php
 // inc/chat_repo.php
 declare(strict_types=1);
