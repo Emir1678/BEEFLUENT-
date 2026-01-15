@@ -1,16 +1,3 @@
-/* Google Fonts - Modern Tasarımın Temeli */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-:root {
-    --primary: #6366f1;       /* Canlı İndigo */
-    --primary-hover: #4f46e5;
-    --bg-main: #f8fafc;        /* Buz Grisi Arka Plan */
-    --text-dark: #1e293b;      /* Başlıklar İçin Koyu Lacivert */
-    --text-muted: #64748b;     /* Yardımcı Yazılar İçin Gri */
-    --white: #ffffff;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --radius: 12px;
-}
 
 * {
     margin: 0;
@@ -18,80 +5,1183 @@
     box-sizing: border-box;
 }
 
-body {
+/* ARKA PLAN: TÜM EKRANA YAYILAN GÖRSEL */
+.auth-full-bg {
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-main);
-    color: var(--text-dark);
-    line-height: 1.6;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    overflow: hidden;
+    /* Canlı ve derin bir gradyan geçişi */
+    background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+    background-attachment: fixed;
 }
 
-/* Modern Navbar */
-header {
-    background-color: var(--white);
-    padding: 1rem 2rem;
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+body.auth-full-bg {
+  overflow: hidden;
 }
 
-.main-nav {
-    max-width: 1200px;
-    margin: 0 auto;
+/* ANA KAPSAYICI */
+.auth-wrapper {
+    height: 100%;
+    width: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: flex-start;
+    padding-left: 10%; /* Paneli solda havada tutar */
 }
+
+/* HAVADA ASILI BEYAZ PANEL */
+.auth-floating-panel {
+    /* Hafif şeffaf beyaz ve cam yansıması */
+    background: rgba(255, 255, 255, 0.85);
+    padding: 3.5rem;
+    border-radius: 30px;
+    width: 100%;
+    max-width: 450px;
+
+    /* Cam Efekti İçin En Önemli Satırlar */
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+
+    /* Derinlik hissi veren gölge */
+    box-shadow: 0 25px 50px -12px rgba(212, 195, 84, 0.4);
+}
+
+/* LOGO VE BAŞLIK */
+.bee-logo {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #1E293B;
+    letter-spacing: -1.5px;
+}
+
+.bee-logo span {
+    color: #F59E0B; /* Amber Gold */
+}
+
+.login-header-left p {
+    color: #64748B;
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+/* FORM ELEMANLARI */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(30, 41, 59, 0.1);
+    border-radius: 14px;
+    background: rgba(248, 250, 252, 0.8);
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #F59E0B;
+    background: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+}
+
+/* BUTON */
+.btn-bee {
+    width: 100%;
+    padding: 1rem;
+    background: #F59E0B;
+    color: #0F172A;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-bee:hover {
+    background: #D97706;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(217, 119, 6, 0.4);
+}
+
+/* HATA KUTUSU */
+.error-box {
+    background: #FFF1F2;
+    color: #E11D48;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #FFE4E6;
+}
+
+/* FOOTER */
+.login-footer {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.login-footer a {
+    color: #F59E0B;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.forgot-pass {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #64748B !important;
+}
+
+/* MOBİL AYARI */
+@media (max-width: 600px) {
+    .auth-wrapper {
+        justify-content: center;
+        padding-left: 0;
+        padding: 20px;
+    }
+}
+
+/* SAĞ TARAF: GÖRSEL + SLOGAN */
+.auth-right-visual {
+    margin-left: auto;              /* sağı it */
+    padding-right: 15%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.auth-right-visual img {
+    max-width: 520px;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.25));
+}
+
+.auth-right-visual h1 {
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.auth-right-visual h1 span {
+    color: #cf6401;
+    padding: 0 15px;
+    border-radius: 10px;
+}
+
+/* =========================
+   DASHBOARD THEME (SCOPED) - BEEFLUENT (AMBER)
+   body.auth-full-bg olmayan sayfalara uygula
+   ========================= */
+
+/* Theme vars (dashboard scope) */
+body.page-dashboard {
+  /* Senin tema değişkenlerin */
+  --primary: #F59E0B;          /* Amber Gold */
+  --primary-hover: #D97706;
+  --bg-main: #FFFBEB;          /* Honey Cream */
+  --white: #ffffff;
+  --text-dark: #1E293B;        /* Deep Charcoal */
+  --text-muted: #64748B;
+  --border: rgba(245, 158, 11, 0.18);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  background-image:
+    url("/assets/img/honey-bg.png");
+
+  background-repeat: no-repeat;
+  background-position:
+    left top;
+
+  background-size: 420px auto; 
+}
+
+/* Page base (dashboard) */
+body.page-dashboard {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-dark);
+  line-height: 1.6;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  background-attachment: fixed;
+
+  /* “premium” hafif baloncuklar (sarı ton) */
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(245, 158, 11, 0.10) 0%, transparent 30%),
+    radial-gradient(circle at 100% 100%, rgba(217, 119, 6, 0.10) 0%, transparent 30%),
+    linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+}
+
+/* Navbar (dashboard) */
+body.page-dashboard header {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+/* Logo (dashboard) */
+body.page-dashboard .logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-decoration: none;
+}
+
+/* Main (dashboard) */
+body.page-dashboard .container {
+  max-width: 1100px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+body.page-dashboard .welcome-section {
+  margin-bottom: 3.5rem;
+  text-align: center;
+}
+
+body.page-dashboard .welcome-section h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+  color: var(--text-dark);
+}
+
+/* Badge (dashboard) */
+body.page-dashboard .user-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--border);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-hover);
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.12);
+}
+
+/* Grid & Cards (dashboard) */
+body.page-dashboard .grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* HER ZAMAN 2 KOLON */
+  gap: 2.5rem;
+  justify-content: center;
+}
+
+body.page-dashboard .card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(245, 158, 11, 0.12);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+body.page-dashboard .card:hover {
+  transform: translateY(-10px);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(245, 158, 11, 0.28);
+  box-shadow: 0 22px 50px rgba(245, 158, 11, 0.18);
+}
+
+/* Icon (dashboard) */
+body.page-dashboard .card-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: #0F172A; /* bee-black hissi */
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 18px rgba(245, 158, 11, 0.28);
+  transition: transform 0.25s ease;
+}
+
+body.page-dashboard .card:hover .card-icon {
+  transform: scale(1.08) rotate(4deg);
+}
+
+body.page-dashboard .card h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: var(--text-dark);
+}
+
+body.page-dashboard .card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Admin button (dashboard) */
+body.page-dashboard .admin-link {
+  margin-top: 4rem;
+  text-align: center;
+}
+
+body.page-dashboard .btn-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+body.page-dashboard .btn-admin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(245, 158, 11, 0.22);
+}
+
+/* Logout (dashboard) */
+body.page-dashboard .btn-logout {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+body.page-dashboard .btn-logout:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--primary-hover);
+}
+
+/* =========================
+   CHAT (AI EGITMEN) - BEEFLUENT THEME
+   ========================= */
+
+/* Chat sayfası layout */
+body.page-chat {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  /* Dashboard ile aynı amber arkaplan (full) */
+  background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.10) 0%, transparent 22%),
+    radial-gradient(circle at 90% 80%, rgba(217, 119, 6, 0.10) 0%, transparent 22%),
+    linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+}
+
+/* Header (chat) */
+body.page-chat header {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+}
+
+/* Logo (chat) */
+body.page-chat .logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--primary, #F59E0B), var(--primary-hover, #D97706));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+body.page-chat .nav-links a {
+  text-decoration: none;
+  color: var(--text-muted, #64748B);
+  font-weight: 700;
+  margin-left: 1.5rem;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+
+body.page-chat .nav-links a:hover {
+  color: var(--primary-hover, #D97706);
+}
+
+/* Main (chat) */
+body.page-chat main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+/* Wrapper (chat) */
+body.page-chat .chat-wrapper {
+  width: 100%;
+  max-width: 1000px;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Chat box (chat) */
+body.page-chat #chatBox {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.08) 0.5px, transparent 0.5px);
+  background-size: 30px 30px;
+}
+
+/* Message base (chat) */
+body.page-chat .message {
+  max-width: 70%;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  position: relative;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+}
+
+/* User message (chat) */
+body.page-chat .user-message {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #0F172A;
+  border-radius: 20px 20px 4px 20px;
+}
+
+/* AI message (chat) */
+body.page-chat .ai-message {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-dark, #1E293B);
+  border: 1px solid rgba(245, 158, 11, 0.16);
+  border-radius: 20px 20px 20px 4px;
+}
+
+/* Welcome pill (chat) */
+body.page-chat .welcome-msg {
+  align-self: center;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text-muted, #64748B);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.14);
+}
+
+/* Input area (chat) */
+body.page-chat .input-area {
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-top: 1px solid rgba(245, 158, 11, 0.14);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Input (chat) */
+body.page-chat #msg {
+  flex: 1;
+  padding: 0.9rem 1.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 999px;
+  outline: none;
+  font-size: 0.95rem;
+  background: rgba(248, 250, 252, 0.80);
+  transition: all 0.25s ease;
+}
+
+body.page-chat #msg:focus {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: #ffffff;
+  box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.14);
+}
+
+/* Send button (chat) */
+body.page-chat button#sendBtn {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #0F172A;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 10px 18px rgba(245, 158, 11, 0.28);
+}
+
+body.page-chat button#sendBtn:hover {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow: 0 16px 28px rgba(245, 158, 11, 0.35);
+}
+
+body.page-chat button#sendBtn:active {
+  transform: scale(0.98);
+}
+
+/* Status (chat) */
+body.page-chat #status {
+  padding: 0.5rem 2.5rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--primary-hover, #D97706);
+  height: 20px;
+}
+
+/* Responsive (chat) */
+@media (max-width: 900px) {
+  body.page-chat header {
+    padding: 0.9rem 1rem;
+  }
+  body.page-chat .nav-links a {
+    margin-left: 0.9rem;
+  }
+  body.page-chat #chatBox {
+    padding: 1.25rem;
+  }
+  body.page-chat .message {
+    max-width: 86%;
+  }
+}
+
+/* =========================
+   PLACEMENT (SEVIYE TESTI) - BEEFLUENT THEME
+   ========================= */
+
+body.page-placement {
+  background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  background-attachment: fixed;
+}
+
+/* Header (placement) */
+body.page-placement header {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.page-placement .logo {
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+body.page-placement .nav-links a {
+  text-decoration: none;
+  color: var(--text-muted, #64748B);
+  font-weight: 700;
+  margin-left: 1.5rem;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+
+body.page-placement .nav-links a:hover { color: #D97706; }
+
+/* Container / card (placement) */
+body.page-placement .container {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+body.page-placement .test-card {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(14px);
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.10);
+  padding: 2.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.14);
+}
+
+/* Header text (placement) */
+body.page-placement .test-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+body.page-placement .test-header h2 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: #0F172A;
+}
+
+body.page-placement .test-header p {
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* Generate button (placement) */
+body.page-placement .btn-gen {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #0F172A;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.2s;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 14px 28px rgba(245, 158, 11, 0.25);
+}
+
+body.page-placement .btn-gen:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(217, 119, 6, 0.30);
+}
+
+body.page-placement #genStatus {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Question boxes (placement) */
+body.page-placement .question-box {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+  border-radius: 18px;
+  margin: 1.25rem 0;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.06);
+}
+
+body.page-placement .question-title {
+  font-weight: 900;
+  margin-bottom: 1rem;
+  display: block;
+  color: #0F172A;
+}
+
+body.page-placement .diff-badge {
+  font-size: 0.72rem;
+  background: rgba(245, 158, 11, 0.18);
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #92400E;
+  margin-left: 8px;
+  font-weight: 800;
+}
+
+/* Options (placement) */
+body.page-placement .option-label {
+  display: block;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 12px 14px;
+  margin-top: 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.18s;
+  font-size: 0.98rem;
+}
+
+body.page-placement .option-label:hover {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+body.page-placement .option-label input {
+  margin-right: 10px;
+}
+
+/* Finish button (placement) */
+body.page-placement .btn-finish {
+  width: 100%;
+  background: #0F172A;
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: 0.2s;
+}
+
+body.page-placement .btn-finish:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+}
+
+/* Result (placement) */
+body.page-placement #result {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 18px;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  color: #92400E;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* Scroll fix (placement) */
+body.page-placement {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* =========================
+   PROFILE (BeeFluent theme)
+   ========================= */
+
+body.page-profile {
+  background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+body.page-profile header {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 25px -12px rgba(217, 119, 6, 0.18);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.page-profile .logo {
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-decoration: none;
+  color: #0F172A;
+  letter-spacing: -0.5px;
+}
+
+body.page-profile .nav-links a {
+  text-decoration: none;
+  color: rgba(30, 41, 59, 0.75);
+  font-weight: 700;
+  margin-left: 1.25rem;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+
+body.page-profile .nav-links a:hover {
+  color: #D97706;
+}
+
+body.page-profile .container {
+  max-width: 900px;
+  margin: 2.5rem auto;
+  padding: 0 1.25rem 3rem;
+}
+
+body.page-profile .profile-card {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -18px rgba(212, 195, 84, 0.35);
+  margin-bottom: 1.75rem;
+}
+
+body.page-profile .profile-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #fde68a 55%, #fffaf0 100%);
+  padding: 2rem 1.75rem;
+  color: #0F172A;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+body.page-profile .avatar-preview {
+  width: 86px;
+  height: 86px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border: 4px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 12px 24px -12px rgba(217, 119, 6, 0.45);
+  overflow: hidden;
+}
+
+body.page-profile .profile-header h3 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+body.page-profile .profile-header p {
+  opacity: 0.8;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+body.page-profile .profile-body {
+  padding: 1.75rem;
+}
+
+body.page-profile .info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.08);
+}
+
+body.page-profile .info-label {
+  color: rgba(30, 41, 59, 0.65);
+  font-weight: 700;
+}
+
+body.page-profile .info-value {
+  font-weight: 900;
+  color: #0F172A;
+}
+
+body.page-profile .form-section {
+  margin-top: 1.75rem;
+}
+
+body.page-profile .form-section h4 {
+  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0F172A;
+}
+
+body.page-profile .form-group {
+  margin-bottom: 1.15rem;
+}
+
+body.page-profile label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 0.55rem;
+  color: #0F172A;
+}
+
+body.page-profile input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(30, 41, 59, 0.12);
+  border-radius: 14px;
+  font-size: 1rem;
+  outline: none;
+  background: rgba(248, 250, 252, 0.85);
+  transition: all 0.25s;
+}
+
+body.page-profile input:focus {
+  border-color: #F59E0B;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+}
+
+body.page-profile button {
+  width: 100%;
+  padding: 0.95rem;
+  background: #F59E0B;
+  color: #0F172A;
+  border: none;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 10px 20px -12px rgba(217, 119, 6, 0.5);
+}
+
+body.page-profile button:hover {
+  background: #D97706;
+  transform: translateY(-2px);
+}
+
+body.page-profile .alert {
+  padding: 1rem;
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+body.page-profile .alert-error {
+  color: #E11D48;
+}
+
+body.page-profile .alert-success {
+  color: #16a34a;
+}
+
+body.page-profile .container > div[style*="text-align: center"] a {
+  color: #D97706 !important;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+body.page-profile .container > div[style*="text-align: center"] a:hover {
+  text-decoration: underline;
+}
+/* =========================
+   HISTORY (SOHBET GECMISI) - BEEFLUENT THEME
+   ========================= */
+
+body.page-history {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-dark, #1E293B);
+  line-height: 1.6;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.10) 0%, transparent 22%),
+    radial-gradient(circle at 90% 80%, rgba(217, 119, 6, 0.10) 0%, transparent 22%),
+    linear-gradient(135deg, #f59f0bc5 0%, #e6cb468b 50%, #eecd6381 100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Header cam */
+body.page-history header {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+body.page-history .logo {
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-decoration: none;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+body.page-history .nav-links a {
+  text-decoration: none;
+  color: rgba(30, 41, 59, 0.75);
+  font-weight: 800;
+  margin-left: 1.25rem;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+body.page-history .nav-links a:hover { color: #D97706; }
+
+/* Layout */
+body.page-history .container {
+  max-width: 1000px; /* panel inceyse bunu büyüt */
+  margin: 2.5rem auto;
+  padding: 0 1.25rem 3rem;
+}
+
+body.page-history .history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1.75rem;
+}
+
+body.page-history .history-header h2 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0F172A;
+}
+
+/* Clear button */
+body.page-history .btn-clear {
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(225, 29, 72, 0.25);
+  color: #E11D48;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.2s;
+  backdrop-filter: blur(10px);
+}
+body.page-history .btn-clear:hover {
+  background: #E11D48;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* List */
+body.page-history .history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+body.page-history .history-item {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  border-radius: 22px;
+  padding: 1.25rem 1.25rem;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+body.page-history .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+body.page-history .role-user { color: #92400E; }   /* amber dark */
+body.page-history .role-ai { color: #16a34a; }     /* green */
+
+body.page-history .date {
+  color: rgba(30, 41, 59, 0.65);
+  font-weight: 700;
+}
+
+body.page-history .message-text {
+  font-size: 0.98rem;
+  white-space: pre-wrap;
+  color: #1E293B;
+  line-height: 1.55;
+}
+
+/* Empty */
+body.page-history .empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 24px;
+  border: 1px dashed rgba(245, 158, 11, 0.25);
+  color: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+body.page-history .empty-state a {
+  color: #D97706 !important;
+  text-decoration: none;
+  font-weight: 900;
+}
+body.page-history .empty-state a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  body.page-history header { padding: 0.9rem 1rem; }
+  body.page-history .nav-links a { margin-left: 0.9rem; }
+  body.page-history .history-header { flex-direction: column; align-items: flex-start; }
+  body.page-history .container { max-width: 900px; }
+}
+/* =========================
+   GLOBAL LOGO (HER SAYFA)
+   ========================= */
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-decoration: none;
-    letter-spacing: -1px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+
+  /* TEK RENK / TEK GRADYAN */
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-.nav-links {
-    display: flex;
-    list-style: none;
-    gap: 2rem;
+/* Dashboard honeycomb overlay: kenarlarda yarım petek görünmesin */
+body.page-dashboard {
+  position: relative;
+  overflow: hidden; /* taşanı kırp */
 }
 
-.nav-links a {
-    text-decoration: none;
-    color: var(--text-muted);
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.nav-links a:hover {
-    color: var(--primary);
-}
-
-/* Modern Buton */
-.btn-primary {
-    background-color: var(--primary);
-    color: var(--white);
-    padding: 0.6rem 1.2rem;
-    border-radius: var(--radius);
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.2s;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
-}
-
-/* Kart Yapısı (Mesajlar veya Panel İçin) */
-.card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-}
