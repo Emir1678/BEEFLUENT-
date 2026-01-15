@@ -1,3 +1,4 @@
+
 <?php
 // api/chat_history.php
 declare(strict_types=1);
