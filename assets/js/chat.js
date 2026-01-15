@@ -1,3 +1,4 @@
+
 // assets/js/chat.js
 
 const chatBox = document.getElementById("chatBox");
