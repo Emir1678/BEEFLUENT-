@@ -1,3 +1,4 @@
+
 <?php
 // api/placement_submit.php
 declare(strict_types=1);
