@@ -1,3 +1,4 @@
+
 <?php
 // api/placement_generate.php
 declare(strict_types=1);
