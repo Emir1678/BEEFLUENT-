@@ -1,3 +1,4 @@
+
 <?php
 // inc/init.php
 declare(strict_types=1);
