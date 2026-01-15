@@ -1,3 +1,4 @@
+
 <?php
 // inc/admin_guard.php
 declare(strict_types=1);
