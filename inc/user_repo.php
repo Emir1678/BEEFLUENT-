@@ -1,3 +1,4 @@
+
 <?php
 // inc/user_repo.php
 declare(strict_types=1);
@@ -35,21 +36,23 @@ function find_user_by_id(int $id): ?array {
 
 /** Like UserStore.authenticate(email, pass) */
 function authenticate_user(string $email, string $rawPassword): ?array {
-    $u = find_user_by_email($email);
-    if (!$u) return null;
+    global $conn;
 
-    $hash = hash_password_sha256($rawPassword);
-    if ($hash !== $u["password_hash"]) return null;
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
-    return [
-    "id" => (int)$u["id"],
-    "name" => $u["name"],
-    "email" => $u["email"],
-    "level" => $u["language_level"],
-    "avatar" => $u["avatar_path"],
-    "role" => $u["role"] ?? "user"
-];
+    $user = $res->fetch_assoc();
+    if (!$user) {
+        return null;
+    }
 
+    if (!password_verify($rawPassword, $user["password_hash"])) {
+        return null;
+    }
+
+    return $user;
 }
 
 /** Like UserStore.saveNew(name,email,password) */
