@@ -1,3 +1,4 @@
+
 <?php
 // inc/config.php
 declare(strict_types=1);
