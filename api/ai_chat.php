@@ -26,8 +26,31 @@ if ($message === "") {
 
 $userId = (int)$_SESSION["user"]["id"];
 
-// Save user message first
-chat_save_message($userId, "user", $message);
+/**
+ * SESSION SUPPORT (Option A)
+ * - We keep a session id in PHP session: $_SESSION["chat_session_id"]
+ * - If client sends session_id, we respect it (so opening an old session continues it)
+ * - If not provided, we create one if missing (so new chats get a unique session)
+ *
+ * NOTE: For this to persist in DB, you MUST add chats.session_id column.
+ */
+$clientSessionId = trim((string)($input["session_id"] ?? ""));
+$sessionId = "";
+
+// Prefer session id coming from client (viewing old session)
+if ($clientSessionId !== "") {
+    $sessionId = $clientSessionId;
+    $_SESSION["chat_session_id"] = $sessionId;
+} else {
+    // Otherwise use server session, or create a new one
+    if (!isset($_SESSION["chat_session_id"]) || !is_string($_SESSION["chat_session_id"]) || trim($_SESSION["chat_session_id"]) === "") {
+        $_SESSION["chat_session_id"] = chat_new_session_id();
+    }
+    $sessionId = (string)$_SESSION["chat_session_id"];
+}
+
+// Save user message first (with sessionId)
+chat_save_message($userId, "user", $message, $sessionId);
 
 $user = $_SESSION["user"];
 $dbUser = find_user_by_id($userId);
@@ -100,7 +123,12 @@ if (!$reply) {
     exit;
 }
 
-// Save assistant reply
-chat_save_message($userId, "assistant", $reply);
+// Save assistant reply (with sessionId)
+chat_save_message($userId, "assistant", $reply, $sessionId);
 
-echo json_encode(["ok" => true, "reply" => $reply], JSON_UNESCAPED_UNICODE);
+// Return session_id so the frontend can keep it and send it next time
+echo json_encode(
+    ["ok" => true, "reply" => $reply, "session_id" => $sessionId],
+    JSON_UNESCAPED_UNICODE
+);
+
