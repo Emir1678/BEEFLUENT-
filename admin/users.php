@@ -1,14 +1,71 @@
-
 <?php
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_once __DIR__ . "/../inc/user_repo.php";
 require_once __DIR__ . "/../inc/chat_repo.php";
 require_once __DIR__ . "/../inc/db.php";
+require_once __DIR__ . "/../inc/activity_repo.php";
 require_admin();
 
 $ok = "";
 $error = "";
 $allowedLevels = ["Beginner", "Intermediate", "Advanced"];
+
+/**
+ * Optional activity log (won't break if table doesn't exist yet).
+ * Table we will create later: activity_log
+ */
+function _activity_log_table_exists(): bool
+{
+  static $cached = null;
+  if ($cached !== null) return $cached;
+
+  global $conn;
+  $sql = "
+    SELECT COUNT(*) AS c
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'activity_log'
+  ";
+  $res = $conn->query($sql);
+  $row = $res ? $res->fetch_assoc() : null;
+  $cached = ((int)($row["c"] ?? 0) > 0);
+  return $cached;
+}
+
+function activity_log(string $action, ?int $targetUserId = null, array $meta = []): void
+{
+  if (!_activity_log_table_exists()) return;
+
+  global $conn;
+
+  $adminId = (int)($_SESSION["user"]["id"] ?? 0);
+  if ($adminId <= 0) return;
+
+  $metaJson = "";
+  if (!empty($meta)) {
+    $metaJson = json_encode($meta, JSON_UNESCAPED_UNICODE);
+    if (!is_string($metaJson)) $metaJson = "";
+  }
+
+  // activity_log schema we will create:
+  // id, admin_id, action, target_user_id, meta_json, ip_address, user_agent, created_at
+  $ip = (string)($_SERVER["REMOTE_ADDR"] ?? "");
+  $ua = (string)($_SERVER["HTTP_USER_AGENT"] ?? "");
+
+  $stmt = $conn->prepare("
+    INSERT INTO activity_log (admin_id, action, target_user_id, meta_json, ip_address, user_agent)
+    VALUES (?,?,?,?,?,?)
+  ");
+  $tuid = $targetUserId !== null ? (int)$targetUserId : null;
+  $stmt->bind_param("isisss", $adminId, $action, $tuid, $metaJson, $ip, $ua);
+  $stmt->execute();
+}
+
+/** Fix the reset password filename mismatch safely */
+$resetHref = "reset_password.php";
+if (!file_exists(__DIR__ . "/reset_password.php") && file_exists(__DIR__ . "/reset_passsword.php")) {
+  $resetHref = "reset_passsword.php";
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $action = (string)($_POST["action"] ?? "");
@@ -20,12 +77,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($action === "set_level") {
       $level = (string)($_POST["level"] ?? "");
       if (!in_array($level, $allowedLevels, true)) throw new RuntimeException("Invalid level.");
+
       update_user_level($userId, $level);
-      $ok = "User level updated.";
-    } elseif ($action === "clear_chats") {
-      chat_clear_user($userId);
-      $ok = "Chat history cleared.";
-    }
+  activity_log_add("set_user_level", $userId, ["level" => $level]);
+  $ok = "User level updated.";
+} elseif ($action === "clear_chats") {
+  chat_clear_user($userId);
+  activity_log_add("clear_user_chats", $userId, ["scope" => "all"]);
+  $ok = "Chat history cleared.";
+}
   } catch (Throwable $e) {
     $error = $e->getMessage();
   }
@@ -59,11 +119,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       --danger: #ef4444;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -73,7 +129,6 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       min-height: 100vh;
     }
 
-    /* Sidebar */
     aside {
       width: 260px;
       background: var(--primary-dark);
@@ -81,17 +136,18 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       padding: 2rem 1.5rem;
       position: fixed;
       height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     aside h2 {
       color: var(--primary);
       margin-bottom: 2rem;
       font-weight: 800;
+      letter-spacing: -0.5px;
     }
 
-    .side-nav {
-      list-style: none;
-    }
+    .side-nav { list-style: none; }
 
     .side-nav a {
       text-decoration: none;
@@ -100,6 +156,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       display: block;
       border-radius: 8px;
       transition: 0.2s;
+      font-weight: 500;
     }
 
     .side-nav a:hover,
@@ -108,7 +165,22 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       color: white;
     }
 
-    /* Main Content */
+    .logout-link {
+      margin-top: auto;
+      color: #ef4444;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 1rem;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+
+    .logout-link:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fecaca;
+    }
+
     main {
       flex: 1;
       margin-left: 260px;
@@ -122,7 +194,12 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       margin-bottom: 2rem;
     }
 
-    /* Table */
+    .header-box h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
     .table-container {
       background: var(--white);
       border-radius: var(--radius);
@@ -131,11 +208,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       overflow: hidden;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 
     th {
       background: #f8fafc;
@@ -143,10 +216,11 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       padding: 1rem;
       border-bottom: 1px solid var(--border);
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       font-size: 0.75rem;
       letter-spacing: 0.05em;
+      white-space: nowrap;
     }
 
     td {
@@ -155,92 +229,70 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       vertical-align: middle;
     }
 
-    tr:last-child td {
-      border-bottom: none;
-    }
+    tr:last-child td { border-bottom: none; }
 
-    /* Badges */
     .badge {
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
+      display: inline-block;
+      margin-right: 6px;
     }
 
-    .badge-role {
-      background: #f1f5f9;
-      color: var(--text-dark);
-    }
+    .badge-role { background: #f1f5f9; color: var(--text-dark); }
+    .badge-level { background: #e0e7ff; color: var(--primary); }
 
-    .badge-level {
-      background: #e0e7ff;
-      color: var(--primary);
-    }
-
-    /* Form */
     select {
-      padding: 5px 10px;
-      border-radius: 6px;
+      padding: 6px 10px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       outline: none;
+      background: #fff;
     }
 
     button {
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
       border: none;
       cursor: pointer;
-      font-weight: 600;
-      font-size: 0.8rem;
+      font-weight: 700;
+      font-size: 0.82rem;
       transition: 0.2s;
     }
 
-    .btn-update {
-      background: var(--primary);
-      color: white;
-      margin-left: 5px;
-    }
+    .btn-update { background: var(--primary); color: white; margin-left: 8px; }
+    .btn-update:hover { filter: brightness(0.95); }
 
-    .btn-clear {
-      background: #fee2e2;
-      color: var(--danger);
-    }
-
-    .btn-clear:hover {
-      background: var(--danger);
-      color: white;
-    }
+    .btn-clear { background: #fee2e2; color: var(--danger); }
+    .btn-clear:hover { background: var(--danger); color: white; }
 
     .action-links a {
       text-decoration: none;
       color: var(--primary);
-      font-weight: 600;
-      font-size: 0.8rem;
+      font-weight: 700;
+      font-size: 0.82rem;
       margin-right: 10px;
     }
 
-    .action-links a:hover {
-      text-decoration: underline;
-    }
+    .action-links a:hover { text-decoration: underline; }
 
     .alert {
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 10px;
       margin-bottom: 1.5rem;
       font-size: 0.9rem;
       border: 1px solid transparent;
+      font-weight: 600;
     }
 
-    .alert-success {
-      background: #f0fdf4;
-      color: #16a34a;
-      border-color: #dcfce7;
-    }
+    .alert-success { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
+    .alert-error { background: #fef2f2; color: #b91c1c; border-color: #fee2e2; }
 
-    .alert-error {
-      background: #fef2f2;
-      color: #b91c1c;
-      border-color: #fee2e2;
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 2px;
     }
   </style>
 </head>
@@ -253,9 +305,12 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       <ul class="side-nav">
         <li><a href="index.php">🏠 Dashboard</a></li>
         <li><a href="users.php" class="active">👥 User Management</a></li>
+        <li><a href="stats.php">📊 Overall Statistics</a></li>
+        <li><a href="activity_log.php">🧾 Activity Log</a></li>
         <li><a href="../dashboard.php">🌐 Back to Site</a></li>
       </ul>
     </nav>
+    <a href="../logout.php" class="logout-link">Log out</a>
   </aside>
 
   <main>
@@ -275,25 +330,31 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th style="width:90px;">ID</th>
             <th>User</th>
-            <th>Role / Level</th>
-            <th>Update Level</th>
-            <th>Actions</th>
+            <th style="width:220px;">Role / Level</th>
+            <th style="width:260px;">Update Level</th>
+            <th style="width:320px;">Actions</th>
           </tr>
         </thead>
         <tbody>
           <?php foreach ($users as $u): ?>
             <tr>
               <td><strong>#<?php echo (int)$u["id"]; ?></strong></td>
+
               <td>
-                <div style="font-weight: 700;"><?php echo h($u["name"]); ?></div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);"><?php echo h($u["email"]); ?></div>
+                <div style="font-weight: 800;"><?php echo h($u["name"]); ?></div>
+                <div class="muted"><?php echo h($u["email"]); ?></div>
+                <div class="muted">
+                  Joined: <?php echo h(date("d M Y", strtotime((string)$u["created_at"]))); ?>
+                </div>
               </td>
+
               <td>
                 <span class="badge badge-role"><?php echo h($u["role"]); ?></span>
                 <span class="badge badge-level"><?php echo h((string)($u["language_level"] ?? "N/A")); ?></span>
               </td>
+
               <td>
                 <form method="post" style="display: flex; align-items: center;">
                   <input type="hidden" name="action" value="set_level">
@@ -308,12 +369,14 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
                   <button type="submit" class="btn-update">Update</button>
                 </form>
               </td>
+
               <td>
-                <div class="action-links" style="margin-bottom: 8px;">
+                <div class="action-links" style="margin-bottom: 10px;">
                   <a href="user_chats.php?user_id=<?php echo (int)$u["id"]; ?>">Chats</a>
                   <a href="user_tests.php?user_id=<?php echo (int)$u["id"]; ?>">Tests</a>
-                  <a href="reset_password.php?user_id=<?php echo (int)$u["id"]; ?>">Password</a>
+                  <a href="<?php echo h($resetHref); ?>?user_id=<?php echo (int)$u["id"]; ?>">Password</a>
                 </div>
+
                 <form method="post" onsubmit="return confirm('Clear all chat history for this user?');">
                   <input type="hidden" name="action" value="clear_chats">
                   <input type="hidden" name="user_id" value="<?php echo (int)$u["id"]; ?>">
@@ -330,3 +393,4 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
 </body>
 
 </html>
+
