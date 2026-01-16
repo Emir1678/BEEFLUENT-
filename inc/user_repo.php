@@ -228,4 +228,3 @@ function admin_set_user_password(int $userId, string $rawPassword): void {
     $stmt->bind_param("si", $hash, $userId);
     $stmt->execute();
 }
-
