@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_once __DIR__ . "/../inc/chat_repo.php";
@@ -7,11 +6,11 @@ require_admin();
 
 $userId = (int)($_GET["user_id"] ?? 0);
 if ($userId <= 0) {
-  echo "Kullanıcı ID bulunamadı.";
+  echo "User ID not found.";
   exit;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["action"] ?? "") === "clear") {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && (($_POST["action"] ?? "") === "clear")) {
   chat_clear_user($userId);
   redirect("user_chats.php?user_id=" . $userId);
 }
@@ -21,7 +20,7 @@ $stmtU->bind_param("i", $userId);
 $stmtU->execute();
 $target = $stmtU->get_result()->fetch_assoc();
 if (!$target) {
-  echo "Kullanıcı mevcut değil.";
+  echo "User does not exist.";
   exit;
 }
 
@@ -34,12 +33,12 @@ $messages = [];
 while ($r = $res->fetch_assoc()) $messages[] = $r;
 ?>
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kullanıcı Sohbetleri - Admin</title>
+  <title>User Chats - Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -122,6 +121,8 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
       justify-content: space-between;
       align-items: flex-end;
       margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .user-info h1 {
@@ -167,9 +168,11 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
     .entry-meta {
       display: flex;
       justify-content: space-between;
+      gap: 1rem;
       margin-bottom: 0.5rem;
       font-size: 0.75rem;
       font-weight: 700;
+      flex-wrap: wrap;
     }
 
     .meta-role {
@@ -199,6 +202,7 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
+      white-space: nowrap;
     }
 
     .btn-clear:hover {
@@ -212,18 +216,29 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
       color: var(--text-muted);
       font-style: italic;
     }
+
+    .back-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
 <body>
 
   <aside>
-    <h2>AI TUTOR ADMIN</h2>
+    <h2>BEFLUENT ADMIN</h2>
     <nav>
       <ul class="side-nav">
         <li><a href="index.php">🏠 Dashboard</a></li>
-        <li><a href="users.php" class="active">👥 Kullanıcı Yönetimi</a></li>
-        <li><a href="../dashboard.php">🌐 Siteye Dön</a></li>
+        <li><a href="users.php" class="active">👥 User Management</a></li>
+        <li><a href="../dashboard.php">🌐 Back to Site</a></li>
       </ul>
     </nav>
   </aside>
@@ -231,27 +246,27 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
   <main>
     <div class="header-box">
       <div class="user-info">
-        <h1>Sohbet Kayıtları</h1>
-        <p>Kullanıcı: <strong><?php echo h($target["name"]); ?></strong> (<?php echo h($target["email"]); ?>)</p>
+        <h1>Chat Logs</h1>
+        <p>User: <strong><?php echo h($target["name"]); ?></strong> (<?php echo h($target["email"]); ?>)</p>
       </div>
 
       <?php if ($messages): ?>
-        <form method="post" onsubmit="return confirm('Bu kullanıcının TÜM sohbet geçmişini silmek istediğinize emin misiniz?');">
+        <form method="post" onsubmit="return confirm('Are you sure you want to delete ALL chat history for this user?');">
           <input type="hidden" name="action" value="clear">
-          <button type="submit" class="btn-clear">Geçmişi Temizle</button>
+          <button type="submit" class="btn-clear">Clear History</button>
         </form>
       <?php endif; ?>
     </div>
 
     <div class="log-container">
       <?php if (!$messages): ?>
-        <div class="empty-state">Bu kullanıcıya ait henüz bir sohbet kaydı bulunmuyor.</div>
+        <div class="empty-state">No chat records found for this user yet.</div>
       <?php else: ?>
         <?php foreach ($messages as $m): ?>
-          <div class="chat-entry <?php echo $m["role"] === "user" ? "user" : "assistant"; ?>">
+          <div class="chat-entry <?php echo ($m["role"] === "user") ? "user" : "assistant"; ?>">
             <div class="entry-meta">
               <span class="meta-role">
-                <?php echo $m["role"] === "user" ? "👤 Kullanıcı" : "🤖 Yapay Zeka"; ?>
+                <?php echo ($m["role"] === "user") ? "👤 User" : "🤖 AI"; ?>
               </span>
               <span class="meta-time"><?php echo date("d.m.Y H:i", strtotime($m["created_at"])); ?></span>
             </div>
@@ -262,10 +277,11 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
     </div>
 
     <div style="margin-top: 2rem;">
-      <a href="users.php" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;">← Kullanıcı Listesine Dön</a>
+      <a href="users.php" class="back-link">← Back to User List</a>
     </div>
   </main>
 
 </body>
 
 </html>
+
