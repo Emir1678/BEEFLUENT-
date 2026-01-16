@@ -2,6 +2,8 @@
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_once __DIR__ . "/../inc/chat_repo.php";
 require_once __DIR__ . "/../inc/db.php";
+require_once __DIR__ . "/../inc/activity_repo.php";
+
 require_admin();
 
 $userId = (int)($_GET["user_id"] ?? 0);
@@ -12,6 +14,7 @@ if ($userId <= 0) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && (($_POST["action"] ?? "") === "clear")) {
   chat_clear_user($userId);
+  activity_log_add("clear_user_chats", $userId, ["scope" => "all", "from" => "user_chats.php"]);
   redirect("user_chats.php?user_id=" . $userId);
 }
 
@@ -284,4 +287,5 @@ while ($r = $res->fetch_assoc()) $messages[] = $r;
 </body>
 
 </html>
+
 
