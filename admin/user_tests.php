@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_once __DIR__ . "/../inc/db.php";
@@ -6,17 +5,17 @@ require_admin();
 
 $userId = (int)($_GET["user_id"] ?? 0);
 if ($userId <= 0) {
-  echo "Kullanıcı ID eksik.";
+  echo "Missing user ID.";
   exit;
 }
 
-// Kullanıcı bilgilerini al
+// Fetch user info
 $stmtU = $conn->prepare("SELECT id, name, email FROM users WHERE id=?");
 $stmtU->bind_param("i", $userId);
 $stmtU->execute();
 $target = $stmtU->get_result()->fetch_assoc();
 if (!$target) {
-  echo "Kullanıcı bulunamadı.";
+  echo "User not found.";
   exit;
 }
 
@@ -26,10 +25,10 @@ $tableMissing = false;
 try {
   $stmt = $conn->prepare(
     "SELECT percentage, level, created_at
-         FROM test_results
-         WHERE user_id=?
-         ORDER BY id DESC
-         LIMIT 50"
+       FROM test_results
+      WHERE user_id=?
+      ORDER BY id DESC
+      LIMIT 50"
   );
   $stmt->bind_param("i", $userId);
   $stmt->execute();
@@ -40,12 +39,12 @@ try {
 }
 ?>
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Test Geçmişi - Admin</title>
+  <title>Test History - Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -137,7 +136,7 @@ try {
       font-size: 0.9rem;
     }
 
-    /* Table Style */
+    /* Table */
     .table-container {
       background: var(--white);
       border-radius: var(--radius);
@@ -173,7 +172,7 @@ try {
       border-bottom: none;
     }
 
-    /* Level Badges */
+    /* Level badges */
     .badge {
       padding: 4px 10px;
       border-radius: 20px;
@@ -221,59 +220,70 @@ try {
       color: var(--text-muted);
       font-style: italic;
     }
+
+    .back-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
 <body>
 
   <aside>
-    <h2>AI TUTOR ADMIN</h2>
+    <h2>BEEFLUENT ADMIN</h2>
     <nav>
       <ul class="side-nav">
         <li><a href="index.php">🏠 Dashboard</a></li>
-        <li><a href="users.php" class="active">👥 Kullanıcı Yönetimi</a></li>
-        <li><a href="../dashboard.php">🌐 Siteye Dön</a></li>
+        <li><a href="users.php" class="active">👥 User Management</a></li>
+        <li><a href="../dashboard.php">🌐 Back to Site</a></li>
       </ul>
     </nav>
   </aside>
 
   <main>
     <div class="header-box">
-      <h1>Sınav Geçmişi</h1>
+      <h1>Test History</h1>
       <div class="user-info-bar">
-        Kullanıcı: <strong><?php echo h($target["name"]); ?></strong> (<?php echo h($target["email"]); ?>)
+        User: <strong><?php echo h($target["name"]); ?></strong> (<?php echo h($target["email"]); ?>)
       </div>
     </div>
 
     <?php if ($tableMissing): ?>
       <div class="alert alert-error">
-        <strong>Hata:</strong> test_results tablosu bulunamadı. Lütfen phpMyAdmin üzerinden tabloyu oluşturun.
+        <strong>Error:</strong> The <code>test_results</code> table was not found. Please create it in phpMyAdmin.
       </div>
     <?php elseif (!$attempts): ?>
       <div class="table-container">
-        <div class="empty-state">Bu kullanıcı henüz seviye belirleme testi yapmamış.</div>
+        <div class="empty-state">This user hasn’t taken the placement test yet.</div>
       </div>
     <?php else: ?>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Tarih / Saat</th>
-              <th>Başarı Oranı</th>
-              <th>Atanan Seviye</th>
+              <th>Date / Time</th>
+              <th>Score</th>
+              <th>Assigned Level</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($attempts as $a): ?>
               <tr>
                 <td><?php echo date("d.m.Y - H:i", strtotime($a["created_at"])); ?></td>
-                <td class="score-text">%<?php echo h((string)$a["percentage"]); ?></td>
+                <td class="score-text"><?php echo h((string)$a["percentage"]); ?>%</td>
                 <td>
                   <?php
-                  $lvl = strtolower($a["level"]);
+                  $lvl = strtolower((string)$a["level"]);
                   $badgeClass = "badge-beginner";
-                  if (strpos($lvl, 'intermediate') !== false) $badgeClass = "badge-intermediate";
-                  if (strpos($lvl, 'advanced') !== false) $badgeClass = "badge-advanced";
+                  if (strpos($lvl, "intermediate") !== false) $badgeClass = "badge-intermediate";
+                  if (strpos($lvl, "advanced") !== false) $badgeClass = "badge-advanced";
                   ?>
                   <span class="badge <?php echo $badgeClass; ?>">
                     <?php echo h((string)$a["level"]); ?>
@@ -287,10 +297,11 @@ try {
     <?php endif; ?>
 
     <div style="margin-top: 2rem;">
-      <a href="users.php" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;">← Kullanıcı Listesine Dön</a>
+      <a href="users.php" class="back-link">← Back to User List</a>
     </div>
   </main>
 
 </body>
 
 </html>
+
