@@ -181,17 +181,18 @@ require_admin();
         <p>View the user list, review levels, and make edits.</p>
       </a>
 
-      <div class="admin-card">
-        <div class="icon-box">📊</div>
-        <h3>Overall Statistics</h3>
-        <p>Coming soon: track total chats and active learners here.</p>
-      </div>
+      <a href="stats.php" class="admin-card">
+  <div class="icon-box">📊</div>
+  <h3>Overall Statistics</h3>
+  <p>View platform usage, chats, and active learners.</p>
+</a>
 
-      <div class="admin-card">
-        <div class="icon-box">⚙️</div>
-        <h3>System Settings</h3>
-        <p>Configure AI Tutor parameters and general site settings.</p>
-      </div>
+<a href="activity_log.php" class="admin-card">
+  <div class="icon-box">🧾</div>
+  <h3>Activity Log</h3>
+  <p>Track admin actions, logins, and important system events.</p>
+</a>
+
     </div>
   </main>
 
