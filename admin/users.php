@@ -15,22 +15,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $userId = (int)($_POST["user_id"] ?? 0);
 
   try {
-    if ($userId <= 0) throw new RuntimeException("Geçersiz kullanıcı ID.");
+    if ($userId <= 0) throw new RuntimeException("Invalid user ID.");
 
     if ($action === "set_level") {
       $level = (string)($_POST["level"] ?? "");
-      if (!in_array($level, $allowedLevels, true)) throw new RuntimeException("Geçersiz seviye.");
+      if (!in_array($level, $allowedLevels, true)) throw new RuntimeException("Invalid level.");
       update_user_level($userId, $level);
-      $ok = "Kullanıcı seviyesi güncellendi.";
+      $ok = "User level updated.";
     } elseif ($action === "clear_chats") {
       chat_clear_user($userId);
-      $ok = "Sohbet geçmişi temizlendi.";
+      $ok = "Chat history cleared.";
     }
   } catch (Throwable $e) {
     $error = $e->getMessage();
   }
-  // Formun tekrar gönderilmesini engellemek için redirect yerine mesajları session'da taşıyabilirsin, 
-  // ama basitlik için şimdilik akışı bozmayalım.
 }
 
 $stmt = $conn->prepare("SELECT id, name, email, role, language_level, created_at FROM users ORDER BY id ASC");
@@ -40,12 +38,12 @@ $users = [];
 while ($row = $res->fetch_assoc()) $users[] = $row;
 ?>
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kullanıcı Yönetimi - AI Tutor</title>
+  <title>User Management - BeeFluent Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -75,7 +73,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       min-height: 100vh;
     }
 
-    /* Sidebar Sidebar (Aynı Tema) */
+    /* Sidebar */
     aside {
       width: 260px;
       background: var(--primary-dark);
@@ -124,7 +122,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       margin-bottom: 2rem;
     }
 
-    /* Table Design */
+    /* Table */
     .table-container {
       background: var(--white);
       border-radius: var(--radius);
@@ -179,7 +177,7 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       color: var(--primary);
     }
 
-    /* Form Elements */
+    /* Form */
     select {
       padding: 5px 10px;
       border-radius: 6px;
@@ -230,12 +228,19 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
       border-radius: 8px;
       margin-bottom: 1.5rem;
       font-size: 0.9rem;
+      border: 1px solid transparent;
     }
 
     .alert-success {
       background: #f0fdf4;
       color: #16a34a;
-      border: 1px solid #dcfce7;
+      border-color: #dcfce7;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fee2e2;
     }
   </style>
 </head>
@@ -243,32 +248,38 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
 <body>
 
   <aside>
-    <h2>AI TUTOR ADMIN</h2>
+    <h2>BEFLUENT ADMIN</h2>
     <nav>
       <ul class="side-nav">
         <li><a href="index.php">🏠 Dashboard</a></li>
-        <li><a href="users.php" class="active">👥 Kullanıcı Yönetimi</a></li>
-        <li><a href="../dashboard.php">🌐 Siteye Dön</a></li>
+        <li><a href="users.php" class="active">👥 User Management</a></li>
+        <li><a href="../dashboard.php">🌐 Back to Site</a></li>
       </ul>
     </nav>
   </aside>
 
   <main>
     <div class="header-box">
-      <h1>Kullanıcı Yönetimi</h1>
+      <h1>User Management</h1>
     </div>
 
-    <?php if ($ok): ?><div class="alert alert-success"><?php echo h($ok); ?></div><?php endif; ?>
+    <?php if ($ok): ?>
+      <div class="alert alert-success"><?php echo h($ok); ?></div>
+    <?php endif; ?>
+
+    <?php if ($error): ?>
+      <div class="alert alert-error"><?php echo h($error); ?></div>
+    <?php endif; ?>
 
     <div class="table-container">
       <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Kullanıcı Bilgisi</th>
-            <th>Rol / Seviye</th>
-            <th>Seviye Güncelle</th>
-            <th>Yönetim</th>
+            <th>User</th>
+            <th>Role / Level</th>
+            <th>Update Level</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -294,19 +305,19 @@ while ($row = $res->fetch_assoc()) $users[] = $row;
                       </option>
                     <?php endforeach; ?>
                   </select>
-                  <button type="submit" class="btn-update">Güncelle</button>
+                  <button type="submit" class="btn-update">Update</button>
                 </form>
               </td>
               <td>
                 <div class="action-links" style="margin-bottom: 8px;">
-                  <a href="user_chats.php?user_id=<?php echo (int)$u["id"]; ?>">Sohbetler</a>
-                  <a href="user_tests.php?user_id=<?php echo (int)$u["id"]; ?>">Testler</a>
-                  <a href="reset_password.php?user_id=<?php echo (int)$u["id"]; ?>">Şifre</a>
+                  <a href="user_chats.php?user_id=<?php echo (int)$u["id"]; ?>">Chats</a>
+                  <a href="user_tests.php?user_id=<?php echo (int)$u["id"]; ?>">Tests</a>
+                  <a href="reset_password.php?user_id=<?php echo (int)$u["id"]; ?>">Password</a>
                 </div>
-                <form method="post" onsubmit="return confirm('Tüm geçmiş silinsin mi?');">
+                <form method="post" onsubmit="return confirm('Clear all chat history for this user?');">
                   <input type="hidden" name="action" value="clear_chats">
                   <input type="hidden" name="user_id" value="<?php echo (int)$u["id"]; ?>">
-                  <button type="submit" class="btn-clear">Geçmişi Temizle</button>
+                  <button type="submit" class="btn-clear">Clear History</button>
                 </form>
               </td>
             </tr>
