@@ -1,4 +1,3 @@
-
 <?php
 // inc/user_repo.php
 declare(strict_types=1);
@@ -7,10 +6,15 @@ require_once __DIR__ . "/db.php";
 
 /**
  * Matches your Java hashing:
- * MessageDigest SHA-256 -> hex string (64 chars)
+ * SHA-256 -> hex string (64 chars)
  */
 function hash_password_sha256(string $raw): string {
     return hash("sha256", $raw);
+}
+
+/** Legacy / old DBs sometimes used MD5 (32 chars). */
+function hash_password_md5(string $raw): string {
+    return md5($raw);
 }
 
 function find_user_by_email(string $email): ?array {
@@ -34,28 +38,59 @@ function find_user_by_id(int $id): ?array {
     return $row ?: null;
 }
 
-/** Like UserStore.authenticate(email, pass) */
+/**
+ * Login:
+ * - Accepts SHA-256 hashes (current)
+ * - Also accepts MD5 hashes (legacy) if DB contains them
+ * - Optional: if DB hash is MD5 and user logs in successfully, auto-upgrade to SHA-256
+ */
 function authenticate_user(string $email, string $rawPassword): ?array {
-    global $conn;
+    $u = find_user_by_email($email);
+    if (!$u) return null;
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $res = $stmt->get_result();
+    $stored = (string)($u["password_hash"] ?? "");
+    if ($stored === "") return null;
 
-    $user = $res->fetch_assoc();
-    if (!$user) {
-        return null;
+    $sha = hash_password_sha256($rawPassword);
+    $md5 = hash_password_md5($rawPassword);
+
+    $ok = false;
+
+    // If DB uses SHA-256
+    if (hash_equals($stored, $sha)) {
+        $ok = true;
+    }
+    // If DB uses MD5 (legacy)
+    elseif (hash_equals($stored, $md5)) {
+        $ok = true;
+
+        // Auto-upgrade to SHA-256 so next login is modern
+        // (safe and fixes the "admin password is md5" issue forever)
+        try {
+            global $conn;
+            $stmt = $conn->prepare("UPDATE users SET password_hash=? WHERE id=?");
+            $uid = (int)$u["id"];
+            $stmt->bind_param("si", $sha, $uid);
+            $stmt->execute();
+            $u["password_hash"] = $sha;
+        } catch (Throwable $e) {
+            // ignore upgrade failure; user is still authenticated
+        }
     }
 
-    if (!password_verify($rawPassword, $user["password_hash"])) {
-        return null;
-    }
+    if (!$ok) return null;
 
-    return $user;
+    return [
+        "id" => (int)$u["id"],
+        "name" => (string)$u["name"],
+        "email" => (string)$u["email"],
+        "level" => $u["language_level"] ?? null,
+        "avatar" => $u["avatar_path"] ?? null,
+        "role" => $u["role"] ?? "user"
+    ];
 }
 
-/** Like UserStore.saveNew(name,email,password) */
+/** Register new user (stores SHA-256) */
 function create_user(string $name, string $email, string $rawPassword): array {
     global $conn;
 
@@ -73,8 +108,8 @@ function create_user(string $name, string $email, string $rawPassword): array {
     $hash = hash_password_sha256($rawPassword);
 
     $stmt = $conn->prepare(
-        "INSERT INTO users (name, email, password_hash, language_level, avatar_path)
-         VALUES (?,?,?,NULL,NULL)"
+        "INSERT INTO users (name, email, password_hash, language_level, avatar_path, role)
+         VALUES (?,?,?,NULL,NULL,'user')"
     );
     $stmt->bind_param("sss", $name, $email, $hash);
     $stmt->execute();
@@ -82,17 +117,15 @@ function create_user(string $name, string $email, string $rawPassword): array {
     $id = (int)$conn->insert_id;
 
     return [
-    "id" => $id,
-    "name" => $name,
-    "email" => $email,
-    "level" => null,
-    "avatar" => null,
-    "role" => "user"
-];
-
+        "id" => $id,
+        "name" => $name,
+        "email" => $email,
+        "level" => null,
+        "avatar" => null,
+        "role" => "user"
+    ];
 }
 
-/** Like UserStore.updateUserLevel(userId, newLevel) */
 function update_user_level(int $userId, string $newLevel): void {
     global $conn;
 
@@ -158,7 +191,6 @@ function update_user_profile(int $userId, string $name, ?string $avatarPath): vo
         throw new RuntimeException("Name cannot be empty.");
     }
 
-    // normalize avatar
     $avatarPath = $avatarPath !== null ? trim($avatarPath) : null;
     if ($avatarPath === "") $avatarPath = null;
 
@@ -173,10 +205,27 @@ function get_user_public(int $userId): ?array {
 
     return [
         "id" => (int)$u["id"],
-        "name" => $u["name"],
-        "email" => $u["email"],
-        "level" => $u["language_level"],
-        "avatar" => $u["avatar_path"],
+        "name" => (string)$u["name"],
+        "email" => (string)$u["email"],
+        "level" => $u["language_level"] ?? null,
+        "avatar" => $u["avatar_path"] ?? null,
         "created_at" => $u["created_at"] ?? null,
     ];
 }
+
+function admin_set_user_password(int $userId, string $rawPassword): void {
+    global $conn;
+
+    $rawPassword = (string)$rawPassword;
+    if (strlen($rawPassword) < 4) {
+        throw new RuntimeException("Password must be at least 4 characters.");
+    }
+
+    // store SHA-256
+    $hash = hash_password_sha256($rawPassword);
+
+    $stmt = $conn->prepare("UPDATE users SET password_hash=? WHERE id=?");
+    $stmt->bind_param("si", $hash, $userId);
+    $stmt->execute();
+}
+
