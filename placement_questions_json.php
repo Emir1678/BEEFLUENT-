@@ -1,4 +1,3 @@
-
 <?php
 declare(strict_types=1);
 
@@ -31,3 +30,4 @@ foreach ($questions as $q) {
 
 echo json_encode(["ok" => true, "questions" => $safe], JSON_UNESCAPED_UNICODE);
 exit;
+
