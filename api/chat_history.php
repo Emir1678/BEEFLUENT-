@@ -1,4 +1,3 @@
-
 <?php
 // api/chat_history.php
 declare(strict_types=1);
@@ -23,3 +22,4 @@ $messages = chat_get_messages($userId, $limit);
 
 // Return as-is (already safe to display with escapeHtml on client)
 echo json_encode(["ok" => true, "messages" => $messages], JSON_UNESCAPED_UNICODE);
+
