@@ -1,21 +1,19 @@
-
 <?php
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_admin();
 ?>
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Yönetim Paneli - AI Tutor</title>
+  <title>Admin Panel - BeeFluent</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #6366f1;
       --primary-dark: #0f172a;
-      /* Admin için daha koyu bir lacivert */
       --bg-main: #f1f5f9;
       --white: #ffffff;
       --text-dark: #1e293b;
@@ -39,7 +37,7 @@ require_admin();
       min-height: 100vh;
     }
 
-    /* Sidebar Tasarımı */
+    /* Sidebar */
     aside {
       width: 260px;
       background-color: var(--primary-dark);
@@ -84,7 +82,7 @@ require_admin();
       color: white;
     }
 
-    /* Ana İçerik Alanı */
+    /* Main content */
     main {
       flex: 1;
       margin-left: 260px;
@@ -162,37 +160,37 @@ require_admin();
 <body>
 
   <aside>
-    <h2>AI TUTOR ADMIN</h2>
+    <h2>BeeFluent ADMIN</h2>
     <ul class="side-nav">
       <li><a href="index.php" class="active">🏠 Dashboard</a></li>
-      <li><a href="users.php">👥 Kullanıcı Yönetimi</a></li>
-      <li><a href="../dashboard.php">🌐 Siteye Dön</a></li>
+      <li><a href="users.php">👥 User Management</a></li>
+      <li><a href="../dashboard.php">🌐 Back to Site</a></li>
     </ul>
-    <a href="../logout.php" class="logout-link">Çıkış Yap</a>
+    <a href="../logout.php" class="logout-link">Log out</a>
   </aside>
 
   <main>
     <div class="header-section">
-      <h1>Yönetim Paneli</h1>
+      <h1>Admin Dashboard</h1>
     </div>
 
     <div class="admin-grid">
       <a href="users.php" class="admin-card">
         <div class="icon-box">👥</div>
-        <h3>Kullanıcıları Yönet</h3>
-        <p>Kullanıcı listesini gör, seviyelerini incele ve düzenleme yap.</p>
+        <h3>Manage Users</h3>
+        <p>View the user list, review levels, and make edits.</p>
       </a>
 
       <div class="admin-card">
         <div class="icon-box">📊</div>
-        <h3>Genel İstatistikler</h3>
-        <p>Toplam sohbet sayısı ve aktif öğrenci verilerini yakında buradan izleyebilirsin.</p>
+        <h3>Overall Statistics</h3>
+        <p>Coming soon: track total chats and active learners here.</p>
       </div>
 
       <div class="admin-card">
         <div class="icon-box">⚙️</div>
-        <h3>Sistem Ayarları</h3>
-        <p>AI Tutor parametrelerini ve genel site ayarlarını yapılandır.</p>
+        <h3>System Settings</h3>
+        <p>Configure AI Tutor parameters and general site settings.</p>
       </div>
     </div>
   </main>
