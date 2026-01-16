@@ -1,4 +1,3 @@
-
 <?php
 // inc/init.php
 declare(strict_types=1);
@@ -25,3 +24,4 @@ function require_login(): void {
 function current_user(): ?array {
     return $_SESSION["user"] ?? null;
 }
+
