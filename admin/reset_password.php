@@ -2,6 +2,8 @@
 require_once __DIR__ . "/../inc/admin_guard.php";
 require_once __DIR__ . "/../inc/user_repo.php";
 require_once __DIR__ . "/../inc/db.php";
+require_once __DIR__ . "/../inc/activity_repo.php";
+
 require_admin();
 
 $userId = (int)($_GET["user_id"] ?? 0);
@@ -33,6 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($p1 !== $p2) throw new RuntimeException("Passwords do not match.");
 
     admin_set_user_password($userId, $p1);
+    activity_log_add("reset_user_password", $userId, ["by_admin" => true]);
     $ok = "Password updated successfully.";
   } catch (Throwable $e) {
     $error = $e->getMessage();
@@ -301,4 +304,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 </body>
 </html>
+
 
