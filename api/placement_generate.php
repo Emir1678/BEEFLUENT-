@@ -1,4 +1,3 @@
-
 <?php
 // api/placement_generate.php
 declare(strict_types=1);
@@ -8,19 +7,28 @@ require_once __DIR__ . "/../inc/user_repo.php";
 require_once __DIR__ . "/../inc/config.php";
 
 header("Content-Type: application/json; charset=utf-8");
+ini_set("display_errors", "0");
 
 if (!isset($_SESSION["user"])) {
     http_response_code(401);
-    echo json_encode(["ok" => false, "error" => "Not logged in"]);
+    echo json_encode(["ok" => false, "error" => "Not logged in"], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
+/**
+ * Force NEW test each click
+ */
+unset($_SESSION["placement_questions"]);
+
 $userId = (int)$_SESSION["user"]["id"];
 $dbUser = find_user_by_id($userId);
-$levelHint = $dbUser["language_level"] ?? "Beginner";
-if (!$levelHint || strtolower((string)$levelHint) === "null") $levelHint = "Beginner";
 
-// Key like your Java: env first then config fallback
+$levelHint = $dbUser["language_level"] ?? "Beginner";
+if (!$levelHint || strtolower((string)$levelHint) === "null") {
+    $levelHint = "Beginner";
+}
+
+// env first, then config fallback
 $apiKey = getenv("GROQ_API_KEY");
 if (!$apiKey) $apiKey = GROQ_API_KEY;
 
@@ -109,88 +117,98 @@ function fixed_test(): array {
     ];
 }
 
-function build_prompt(string $levelHint): string {
+function build_prompt(string $levelHint, string $nonce): string {
     return
-        "Generate exactly 10 English placement test multiple-choice questions.\n"
+        "Return ONLY valid JSON. No markdown. No explanations.\n"
+        . "Generate exactly 10 NEW English placement test multiple-choice questions.\n"
         . "Focus on grammar, vocabulary, prepositions, verb tenses.\n"
         . "Mix difficulty: 3 EASY, 4 MEDIUM, 3 HARD.\n"
-        . "User level hint: {$levelHint}\n\n"
-        . "STRICT FORMAT:\n"
-        . "Q1: question text\n"
-        . "A) option\n"
-        . "B) option\n"
-        . "C) option\n"
-        . "D) option\n"
-        . "ANSWER: A/B/C/D\n"
-        . "DIFF: EASY/MEDIUM/HARD\n"
-        . "---\n"
-        . "Repeat exactly this format. No extra text.\n";
+        . "User level hint: {$levelHint}\n"
+        . "Generation ID: {$nonce}\n\n"
+        . "JSON SCHEMA (must match exactly):\n"
+        . "{\n"
+        . "  \"questions\": [\n"
+        . "    {\n"
+        . "      \"prompt\": \"string\",\n"
+        . "      \"options\": [\"A\",\"B\",\"C\",\"D\"],\n"
+        . "      \"correct\": 0,\n"
+        . "      \"diff\": \"EASY\"\n"
+        . "    }\n"
+        . "  ]\n"
+        . "}\n"
+        . "Rules:\n"
+        . "- options must be exactly 4 strings\n"
+        . "- correct must be 0..3\n"
+        . "- diff must be EASY or MEDIUM or HARD\n";
 }
 
-function parse_questions(string $raw): array {
-    $raw = trim($raw);
-    if ($raw === "") return [];
+function validate_questions_payload($decoded): array {
+    if (!is_array($decoded)) return [];
 
-    // Split by lines that are "---"
-    $blocks = preg_split("/(?m)^(?:-{3,})\\s*$/", $raw);
-    if (!$blocks) return [];
+    $qs = $decoded["questions"] ?? null;
+    if (!is_array($qs) || count($qs) !== 10) return [];
 
     $out = [];
+    $allowedDiff = ["EASY", "MEDIUM", "HARD"];
 
-    foreach ($blocks as $b) {
-        $block = trim($b);
-        if ($block === "") continue;
+    foreach ($qs as $q) {
+        if (!is_array($q)) return [];
 
-        // Q line
-        if (!preg_match("/(?m)^Q\\s*\\d{1,2}[:\\.]\\s*(.+)$/", $block, $mQ)) continue;
-        $prompt = trim($mQ[1]);
+        $prompt = isset($q["prompt"]) ? trim((string)$q["prompt"]) : "";
+        $options = $q["options"] ?? null;
+        $correct = $q["correct"] ?? null;
+        $diff = isset($q["diff"]) ? strtoupper(trim((string)$q["diff"])) : "";
 
-        // Options
+        if ($prompt === "") return [];
+        if (!is_array($options) || count($options) !== 4) return [];
+
         $opts = [];
-        foreach (["A","B","C","D"] as $L) {
-            if (!preg_match("/(?m)^{$L}\\s*[\\)\\.:\\-]\\s*(.+)$/", $block, $mO)) {
-                $opts = [];
-                break;
-            }
-            $opts[] = trim($mO[1]);
+        foreach ($options as $opt) {
+            $s = trim((string)$opt);
+            if ($s === "") return [];
+            $opts[] = $s;
         }
-        if (count($opts) !== 4) continue;
 
-        // Answer
-        if (!preg_match("/ANSWER\\s*:\\s*([ABCD])/i", $block, $mA)) continue;
-        $ansLetter = strtoupper($mA[1]);
-        $correct = strpos("ABCD", $ansLetter);
-        if ($correct === false) continue;
-
-        // Difficulty
-        if (!preg_match("/(DIFF|DIFFICULTY)\\s*:\\s*(EASY|MEDIUM|HARD)/i", $block, $mD)) continue;
-        $diff = strtoupper($mD[2]);
+        if (!is_int($correct)) {
+            if (is_numeric($correct) && (string)(int)$correct === (string)$correct) {
+                $correct = (int)$correct;
+            } else {
+                return [];
+            }
+        }
+        if ($correct < 0 || $correct > 3) return [];
+        if (!in_array($diff, $allowedDiff, true)) return [];
 
         $out[] = [
             "prompt" => $prompt,
             "options" => $opts,
-            "correct" => (int)$correct,
-            "diff" => $diff
+            "correct" => $correct,
+            "diff" => $diff,
         ];
     }
 
     return $out;
 }
 
-$questions = [];
+function test_signature(array $questions): string {
+    $parts = [];
+    foreach ($questions as $q) {
+        $parts[] = mb_strtolower($q["prompt"] . "||" . implode("||", $q["options"]), "UTF-8");
+    }
+    return hash("sha256", implode("\n", $parts));
+}
 
-// If missing key, just use fixed
-if (!$apiKey || trim($apiKey) === "") {
-    $questions = fixed_test();
-} else {
-    $system = "You generate English placement tests. Follow the format EXACTLY. No extra text.";
-    $prompt = build_prompt($levelHint);
+function call_ai_once(string $apiKey, string $levelHint, string $nonce, array &$debug): array {
+    $system = "You are a strict JSON generator. Output ONLY JSON. No markdown. No extra text.";
+    $prompt = build_prompt($levelHint, $nonce);
 
     $payload = [
         "model" => GROQ_MODEL,
-        "temperature" => 0.2,
-        "top_p" => 1,
-        "max_tokens" => 1200,
+        "temperature" => 0.9,
+        "top_p" => 0.95,
+        "max_tokens" => 1400,
+        "frequency_penalty" => 0.4,
+        "presence_penalty" => 0.3,
         "messages" => [
             ["role" => "system", "content" => $system],
             ["role" => "user", "content" => $prompt],
@@ -203,30 +221,96 @@ if (!$apiKey || trim($apiKey) === "") {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => [
             "Authorization: Bearer " . trim($apiKey),
-            "Content-Type: application/json; charset=UTF-8",
+            "Content-Type: application/json; charset=utf-8",
         ],
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 45,
     ]);
 
     $raw = curl_exec($ch);
+    $errno = curl_errno($ch);
+    $err = curl_error($ch);
     $http = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($raw && $http >= 200 && $http < 300) {
-        $data = json_decode($raw, true);
-        $content = $data["choices"][0]["message"]["content"] ?? "";
-        $questions = parse_questions((string)$content);
-    }
+    $debug["http"] = $http;
+    $debug["curl_errno"] = $errno;
+    $debug["curl_error"] = $err ? $err : null;
 
-    // Fallback if parse failed
-    if (count($questions) < 8) {
-        $questions = fixed_test();
+    if ($errno !== 0 || !$raw || $http < 200 || $http >= 300) return [];
+
+    $data = json_decode($raw, true);
+    if (!is_array($data)) return [];
+
+    $content = $data["choices"][0]["message"]["content"] ?? "";
+    if (!is_string($content) || trim($content) === "") return [];
+
+    $decoded = json_decode($content, true);
+    if (!is_array($decoded)) return [];
+
+    return validate_questions_payload($decoded);
+}
+
+// ---- generation with anti-repeat ----
+
+$questions = [];
+$used = "fixed_fallback";
+$debug = [
+    "attempts" => 0,
+    "http" => null,
+    "curl_errno" => null,
+    "curl_error" => null,
+    "nonce" => null,
+    "repeat_blocked" => false,
+];
+
+$history = $_SESSION["placement_history"] ?? [];
+if (!is_array($history)) $history = [];
+$history = array_values(array_filter($history, fn($x) => is_string($x) && $x !== ""));
+$history = array_slice($history, -5);
+
+$MAX_ATTEMPTS = 3;
+
+if ($apiKey && trim($apiKey) !== "") {
+    for ($attempt = 1; $attempt <= $MAX_ATTEMPTS; $attempt++) {
+        $debug["attempts"] = $attempt;
+
+        $nonce = bin2hex(random_bytes(6));
+        $debug["nonce"] = $nonce;
+
+        $candidate = call_ai_once($apiKey, $levelHint, $nonce, $debug);
+        if (count($candidate) !== 10) continue;
+
+        $sig = test_signature($candidate);
+
+        if (in_array($sig, $history, true)) {
+            $debug["repeat_blocked"] = true;
+            continue;
+        }
+
+        $questions = $candidate;
+        $used = "ai";
+
+        $history[] = $sig;
+        $history = array_slice($history, -5);
+        $_SESSION["placement_history"] = $history;
+        break;
     }
 }
 
-// Store questions in session for grading later
-$_SESSION["placement_questions"] = $questions;
+if (count($questions) !== 10) {
+    $questions = fixed_test();
+    $used = "fixed_fallback";
+}
 
-echo json_encode(["ok" => true, "count" => count($questions)], JSON_UNESCAPED_UNICODE);
+$_SESSION["placement_questions"] = $questions;
+session_write_close();
+
+echo json_encode([
+    "ok" => true,
+    "count" => count($questions),
+    "used" => $used,
+    "debug" => $debug,
+], JSON_UNESCAPED_UNICODE);
+
