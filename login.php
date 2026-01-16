@@ -1,41 +1,43 @@
 <?php
 require_once __DIR__ . "/inc/init.php";
 require_once __DIR__ . "/inc/user_repo.php";
+
 $error = "";
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $email = trim($_POST["email"] ?? "");
-  $pass = $_POST["password"] ?? "";
+  $pass  = (string)($_POST["password"] ?? "");
+
   if ($email === "" || $pass === "") {
-    $error = "Lütfen e-posta ve şifrenizi girin.";
+    $error = "Please enter your email and password.";
   } else {
     $user = authenticate_user($email, $pass);
+
     if ($user) {
       $_SESSION["user"] = $user;
       redirect("dashboard.php");
     } else {
-      $error = "Geçersiz e-posta veya şifre.";
+      $error = "Invalid email or password.";
     }
   }
 }
 ?>
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Giriş Yap - BeeFluent</title>
+  <title>Login - BeeFluent</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="auth-full-bg">
 
   <div class="auth-wrapper">
-
-    <!-- SOL: Login Panel (SENİN MEVCUT KODUN, DEĞİŞMİYOR) -->
     <div class="auth-floating-panel">
       <div class="login-header-left">
-        <h2 class="bee-logo">BEE<span>FLUENT</span></h2>
-        <p>Öğrenme yolculuğuna devam et 🐝</p>
+        <h2 class="bee-logo">Bee<span>Fluent</span></h2>
+        <p>Continue your learning journey 🐝</p>
       </div>
 
       <?php if ($error): ?>
@@ -44,35 +46,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       <form method="post">
         <div class="form-group">
-          <label>E-posta Adresi</label>
+          <label>Email Address</label>
           <input type="email" name="email"
             value="<?php echo h($_POST["email"] ?? ""); ?>"
-            placeholder="email@örnek.com" required>
+            placeholder="email@example.com" required>
         </div>
 
         <div class="form-group">
-          <label>Şifre</label>
+          <label>Password</label>
           <input type="password" name="password" placeholder="••••••••" required>
         </div>
 
-        <button type="submit" class="btn-bee">Giriş Yap</button>
+        <button type="submit" class="btn-bee">Log in</button>
       </form>
 
       <div class="login-footer">
-        <p>Hesabın yok mu? <a href="register.php">Hemen Kaydol</a></p>
-        <a href="forgot_password.php" class="forgot-pass">Şifremi Unuttum</a>
+        <p>Don’t have an account? <a href="register.php">Create one</a></p>
+        <a href="forgot_password.php" class="forgot-pass">Forgot password?</a>
       </div>
     </div>
 
-    <!-- SAĞ: GÖRSEL + YAZI (YENİ EKLENEN KISIM) -->
     <div class="auth-right-visual">
-      <img src="assets/img/hero.png" alt="BeeFluent">
+      <img src="assets/img/hero.png" alt="BeFluent">
       <h1>
         Don't just learn,<br>
         <span>BeeFluent.</span>
       </h1>
     </div>
-
   </div>
 
 </body>
+</html>
+
