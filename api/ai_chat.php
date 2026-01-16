@@ -28,36 +28,30 @@ $userId = (int)$_SESSION["user"]["id"];
 
 /**
  * SESSION SUPPORT (Option A)
- * - We keep a session id in PHP session: $_SESSION["chat_session_id"]
- * - If client sends session_id, we respect it (so opening an old session continues it)
- * - If not provided, we create one if missing (so new chats get a unique session)
- *
- * NOTE: For this to persist in DB, you MUST add chats.session_id column.
  */
 $clientSessionId = trim((string)($input["session_id"] ?? ""));
 $sessionId = "";
 
-// Prefer session id coming from client (viewing old session)
 if ($clientSessionId !== "") {
     $sessionId = $clientSessionId;
     $_SESSION["chat_session_id"] = $sessionId;
 } else {
-    // Otherwise use server session, or create a new one
-    if (!isset($_SESSION["chat_session_id"]) || !is_string($_SESSION["chat_session_id"]) || trim($_SESSION["chat_session_id"]) === "") {
+    if (
+        !isset($_SESSION["chat_session_id"]) ||
+        !is_string($_SESSION["chat_session_id"]) ||
+        trim($_SESSION["chat_session_id"]) === ""
+    ) {
         $_SESSION["chat_session_id"] = chat_new_session_id();
     }
     $sessionId = (string)$_SESSION["chat_session_id"];
 }
-
-// Save user message first (with sessionId)
-chat_save_message($userId, "user", $message, $sessionId);
 
 $user = $_SESSION["user"];
 $dbUser = find_user_by_id($userId);
 $level = $dbUser["language_level"] ?? ($user["level"] ?? null);
 if (!$level || strtolower((string)$level) === "null") $level = "Beginner";
 
-// load key from env first (like your Java)
+// load key from env first
 $apiKey = getenv("GROQ_API_KEY");
 if (!$apiKey) $apiKey = GROQ_API_KEY;
 
@@ -67,21 +61,62 @@ if (!$apiKey || trim($apiKey) === "") {
     exit;
 }
 
-$system = "You are an English tutor. Student level: {$level}. "
-        . "Be concise and helpful. "
-        . "Correct mistakes gently. "
-        . "Give 1 short example. "
-        . "Ask 1 short follow-up question.";
+/**
+ * MEMORY: pull recent messages from THIS session and send as context
+ * Keep it small to avoid token bloat.
+ */
+$history = [];
+$maxContextMessages = 14; // ~7 turns (user+assistant). Adjust if needed.
+
+if (function_exists("chat_get_session_messages") && $sessionId !== "") {
+    // Fetch more than needed, then take the last N
+    $all = chat_get_session_messages($userId, $sessionId, 2000);
+    if ($all) {
+        $history = array_slice($all, -$maxContextMessages);
+    }
+} else {
+    // Fallback (legacy / no session_id column): use last messages overall
+    $all = chat_get_messages($userId, 200);
+    if ($all) {
+        $history = array_slice($all, -$maxContextMessages);
+    }
+}
+
+// Save user message first (with sessionId) AFTER we read old history
+chat_save_message($userId, "user", $message, $sessionId);
+
+$system = "You are BeeFluent, an English tutor. Student level: {$level}. "
+        . "IMPORTANT: Use the conversation context to stay consistent and remember what the student just said. "
+        . "Be concise and helpful. Correct mistakes gently. "
+        . "Give 1 short example. Ask 1 short follow-up question. "
+        . "Do not re-introduce yourself every message.";
+
+// Build messages payload: system + history + current user message
+$messagesPayload = [
+    ["role" => "system", "content" => $system],
+];
+
+// Add prior session history (if any)
+foreach ($history as $h) {
+    $r = (string)($h["role"] ?? "");
+    $c = (string)($h["message"] ?? "");
+
+    // Only allow roles Groq expects
+    if ($r !== "user" && $r !== "assistant") continue;
+    if (trim($c) === "") continue;
+
+    $messagesPayload[] = ["role" => $r, "content" => $c];
+}
+
+// Add the NEW user message at the end (so model responds to it)
+$messagesPayload[] = ["role" => "user", "content" => $message];
 
 $payload = [
     "model" => GROQ_MODEL,
-    "temperature" => 0.2,
+    "temperature" => 0.25,
     "top_p" => 1,
-    "max_tokens" => 300,
-    "messages" => [
-        ["role" => "system", "content" => $system],
-        ["role" => "user", "content" => $message],
-    ],
+    "max_tokens" => 350,
+    "messages" => $messagesPayload,
 ];
 
 $ch = curl_init(GROQ_API_URL);
@@ -94,7 +129,7 @@ curl_setopt_array($ch, [
     ],
     CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
     CURLOPT_CONNECTTIMEOUT => 8,
-    CURLOPT_TIMEOUT => 15,
+    CURLOPT_TIMEOUT => 20,
 ]);
 
 $raw = curl_exec($ch);
@@ -126,9 +161,9 @@ if (!$reply) {
 // Save assistant reply (with sessionId)
 chat_save_message($userId, "assistant", $reply, $sessionId);
 
-// Return session_id so the frontend can keep it and send it next time
 echo json_encode(
     ["ok" => true, "reply" => $reply, "session_id" => $sessionId],
     JSON_UNESCAPED_UNICODE
 );
+
 
